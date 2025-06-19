@@ -1,0 +1,9 @@
+# VulnHunter - Requirements
+python-nmap==0.7.1       # Interface Python pour Nmap
+requests==2.31.0         # Pour les requêtes HTTP (API CVE, scans web)
+Flask==3.0.2             # Framework web pour l'interface
+beautifulsoup4==4.12.3   # Analyse HTML (détection de technologies)
+prettytable==3.10.0      # Formatage des tableaux en CLI
+urllib3==2.2.1           # Gestion des connexions HTTP (sécurité/retry)
+python-dotenv==1.0.1     # Gestion des variables d'environnement (.env)
+pyopenssl==24.1.0        # Support SSL/TLS

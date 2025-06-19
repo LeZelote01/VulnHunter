@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VulnHunter Web Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0f1923; color: #c5c8c6; }
+        .card { background-color: #1a2436; border: 1px solid #2a3b54; }
+        .navbar { background-color: #1a2436; }
+        .btn-primary { background-color: #3498db; border: none; }
+        .btn-primary:hover { background-color: #2980b9; }
+        .vuln-critical { color: #ff6b6b; }
+        .vuln-high { color: #ff9e64; }
+        .vuln-medium { color: #f9ca24; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <h3 class="mb-0">VulnHunter</h3>
+                <small class="text-muted">Professional Vulnerability Scanner</small>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">New Scan</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Target</label>
+                    <input type="text" class="form-control" id="target" placeholder="example.com or 192.168.1.1">
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Ports</label>
+                        <input type="text" class="form-control" id="ports" value="1-1000">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Options</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="webScan">
+                            <label class="form-check-label" for="webScan">
+                                Web Vulnerability Scan
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <button id="scanBtn" class="btn btn-primary w-100">Start Scan</button>
+            </div>
+        </div>
+
+        <div id="results" class="d-none">
+            <!-- Results will be dynamically populated -->
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('scanBtn').addEventListener('click', startScan);
+        
+        async function startScan() {
+            const target = document.getElementById('target').value;
+            const ports = document.getElementById('ports').value;
+            const webScan = document.getElementById('webScan').checked;
+            
+            if (!target) {
+                alert('Please enter a target');
+                return;
+            }
+            
+            document.getElementById('scanBtn').disabled = true;
+            document.getElementById('scanBtn').textContent = 'Scanning...';
+            
+            try {
+                const response = await fetch('/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target, ports, web_scan: webScan })
+                });
+                
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                console.error('Scan error:', error);
+                alert('Scan failed: ' + error.message);
+            } finally {
+                document.getElementById('scanBtn').disabled = false;
+                document.getElementById('scanBtn').textContent = 'Start Scan';
+            }
+        }
+        
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.classList.remove('d-none');
+            
+            let html = `
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between">
+                        <h5 class="mb-0">Scan Results</h5>
+                        <div>Time: ${data.scan_time.toFixed(2)}s</div>
+                    </div>
+                    <div class="card-body">
+                        <h6>Services</h6>
+                        <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Port</th>
+                                    <th>Service</th>
+                                    <th>Version</th>
+                                    <th>CVEs</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+            
+            // Services table
+            for (const [port, service] of Object.entries(data.services)) {
+                const cves = data.cve_vulnerabilities[port] || [];
+                const cveList = cves.map(cve => 
+                    `<span class="badge bg-danger">${cve.id}</span>`
+                ).join(' ');
+                
+                html += `
+                    <tr>
+                        <td>${port}</td>
+                        <td>${service.service}</td>
+                        <td>${service.version}</td>
+                        <td>${cveList || 'None'}</td>
+                    </tr>`;
+            }
+            
+            html += `</tbody></table>`;
+            
+            // Web vulnerabilities
+            if (data.web_vulnerabilities && Object.keys(data.web_vulnerabilities).length > 0) {
+                html += `<h6 class="mt-4">Web Vulnerabilities</h6>
+                         <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th>URL</th>
+                                    <th>Vulnerability</th>
+                                    <th>Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                
+                for (const [url, vulns] of Object.entries(data.web_vulnerabilities)) {
+                    for (const vuln of vulns) {
+                        html += `
+                            <tr>
+                                <td>${url}</td>
+                                <td>${vuln.name}</td>
+                                <td class="vuln-${vuln.severity.toLowerCase()}">
+                                    ${vuln.severity}
+                                </td>
+                            </tr>`;
+                    }
+                }
+                
+                html += `</tbody></table>`;
+            }
+            
+            html += `</div></div>`;
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

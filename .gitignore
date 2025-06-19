@@ -1,0 +1,74 @@
+# Fichier .gitignore pour VulnHunter
+
+### Python ###
+# Fichiers de compilation
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environnements virtuels
+.env/
+venv/
+env/
+.venv/
+
+# Fichiers de configuration
+.env
+*.env
+secrets.py
+
+# Fichiers de sortie
+*.log
+*.sqlite3
+
+# Fichiers de cache
+.pytest_cache/
+.mypy_cache/
+
+# Installation packages
+dist/
+build/
+*.egg-info/
+
+### Résultats de scan ###
+results/
+!results/.gitkeep  # Garder le dossier mais ignorer son contenu
+
+### Système ###
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Fichiers IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Fichiers temporaires
+*.tmp
+*.bak
+*~
+
+### Spécifique à Nmap ###
+# Fichiers temporaires Nmap
+*.xml
+*.gnmap
+*.nmap
+
+### Flask ###
+# Fichiers de session
+instance/
+
+# Fichiers de cache Flask
+.flaskenv
+
+### Jupyter ###
+# Notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+### Documentation ###
+# Fichiers de documentation générés
+docs/_build/
